@@ -9,7 +9,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+.env
 
 # VSCode settings
 .vscode/
