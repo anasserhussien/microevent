@@ -4,6 +4,7 @@ import time
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.background import BackgroundTasks
 from redis_om import HashModel
 from redis_om import get_redis_connection
 from dotenv import load_dotenv
@@ -32,6 +33,7 @@ redis = get_redis_connection(
 )
 
 
+# This is an event order
 class Order(HashModel):
     event_id: str
     fees: float
@@ -49,7 +51,7 @@ class Purchase(BaseModel):
 
 
 @app.post("/orders")
-async def create(purchase: Purchase):
+async def create(purchase: Purchase, background_task: BackgroundTasks):
 
     req = requests.get(f"http://127.0.0.1:8000/events/{purchase.event_id}")
     event = req.json()
@@ -63,6 +65,11 @@ async def create(purchase: Purchase):
     )
 
     order.save()
+
+    # Executing the payment simulation in the background
+    # without blocking the request
+    background_task.add_task(order_completed, order)
+
     return order
 
 
